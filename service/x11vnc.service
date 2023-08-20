@@ -1,0 +1,13 @@
+[Unit]
+Description=x11vnc service
+After=network.target
+
+[Service]
+ExecStart=/usr/bin/x11vnc -listen 0.0.0.0 -rfbport 5900  -quiet -xkb -forever -shared -display :0 -snapfb 
+ExecStop=/usr/bin/killall x11vnc
+Restart=always
+User=root
+Group=root
+
+[Install]
+WantedBy=default.target

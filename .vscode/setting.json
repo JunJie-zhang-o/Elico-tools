@@ -1,0 +1,12 @@
+{
+    "elibot.cs.remoteUserName": "root",
+    "elibot.cs.remotePassword": "elibot",
+    "elibot.cs.remoteDebugPort": "2344",
+    "elibot.cs.remoteDebugIp": "172.16.11.113",
+    // "elibot.cs.simPath": "/home/elibot/Sim/cs_software_x86_v2.1.0",
+    // "elibot.cs.simPath": "/home/elibot/Sim/cs_software_x86_v2.1.1-preview",
+    // "elibot.cs.simPath": "/home/elibot/Sim/cs_software_x86_v2.2.0-test",
+    // "elibot.cs.simPath": "/home/elibot/Sim/cs_software_x86_v2.2.0",
+    // "elibot.cs.simPath": "/home/elibot/Sim/cs_software_x86_v2.3.0",
+    "elibot.cs.simPath": "/home/elibot/Sim/CS_SIMULATOR_v2.6.0"
+}

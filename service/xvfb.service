@@ -1,0 +1,13 @@
+[Unit]
+Description=Xvfb virtual display service
+After=network.target
+
+[Service]
+ExecStart=/usr/bin/Xvfb :0 -screen 0 1280x800x24
+ExecStop=pkill Xvfb
+User=root
+Group=root
+Restart=always
+
+[Install]
+WantedBy=default.target

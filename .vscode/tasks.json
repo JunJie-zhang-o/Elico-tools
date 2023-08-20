@@ -1,0 +1,85 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Elibot Plugin Install local",
+			"type": "shell",
+			"command": "mvn install -Pdeploy_local",
+			"detail": "mvn 本地部署",
+			"problemMatcher": []
+		},
+		{
+			"label": "Elibot Plugin Install remote",
+			"type": "shell",
+			"command": "mvn install -Pdeploy_remote",
+			"detail": "mvn 远程部署",
+			"problemMatcher": []
+		},
+		{
+			"label": "Elibot Run EliServer",
+			"type": "shell",
+			"command": "echo \"elibot\" | sudo -S ${config:elibot.cs.simPath}/EliServer/start_eliserver.sh",
+			"detail": "启动eliserver服务"
+		},
+		{
+			"label": "Elibot Run EliServer For Background",
+			"type": "shell",
+			"command": "echo \"elibot\" | sudo -S ${config:elibot.cs.simPath}/EliServer/start_eliserver_for_task.sh",
+			"detail": "启动自定义的eliserver服务",
+			"isBackground": true,
+			"problemMatcher": {
+				"pattern": {
+					"regexp": "."
+				},
+				"background": {
+					"activeOnStart": true,
+					"beginsPattern": "eliserver_startup",
+					"endsPattern": "eliserver_startup"
+				}
+			}
+		},
+		{
+			"label": "Elibot Sim Start",
+			"type": "shell",
+			"dependsOrder": "sequence",
+			"dependsOn": [
+				// "Elibot Plugin Install local",
+				"Elibot cp jar to local",
+				"Elibot Run EliServer For Background"
+			],
+			"detail": "Start CS Sim"
+		},
+		{
+			"label": "Elibot Stop EliServer",
+			"type": "shell",
+			"command": "echo \"elibot\" | sudo -S ${config:elibot.cs.simPath}/EliServer/stop_eliserver_for_task.sh",
+			"detail": "Stop ELiServer",
+			"presentation": {
+				"clear": true,
+				"echo": true
+			}
+		},
+		{
+			"label": "Elibot cp jar to local",
+			"type": "shell",
+			"command": "mvn package && cp target/*.jar ${config:elibot.cs.simPath}/EliRobot/.plugins",
+			"detail": "部署jar包到指定版本的仿真环境",
+			"problemMatcher": []
+		},
+		{
+			"label": "Elibot cp .plugin to remote",
+			"type": "shell",
+			"command": "mvn package && sshpass -p ${config:elibot.cs.remotePassword} scp target/*.plugin ${config:elibot.cs.remoteUserName}@${config:elibot.cs.remoteDebugIp}:/home/elite/EliRobot/program/",
+			"detail": "部署.plugin文件到远程设备",
+			"problemMatcher": []
+		},
+		{
+			"label": "Elibot cp .jar to remote and restart EliRobot",
+			"type": "shell",
+			// -p ${plugin.install.password} scp -o StrictHostKeyChecking=no target/${project.artifactId}-${project.version}.jar ${plugin.install.username}@${plugin.install.host}:/home/elite/EliRobot/.plugins/${plugin.symbolicname}.jar
+			"command": "mvn package && sshpass -p ${config:elibot.cs.remotePassword} scp target/*.jar ${config:elibot.cs.remoteUserName}@${config:elibot.cs.remoteDebugIp}:/home/elite/EliRobot/.plugins && sshpass -p ${config:elibot.cs.remotePassword} ssh ${config:elibot.cs.remoteUserName}@${config:elibot.cs.remoteDebugIp} pkill java",
+			"detail": "部署.jar文件到远程设备并重启",
+			"problemMatcher": []
+		}
+	]
+}
