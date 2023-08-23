@@ -36,8 +36,8 @@ sudo sed -i '$a export MAVEN_HOME=/usr/share/maven' /etc/profile
 sudo sed -i '$a export PATH=$MAVEN_HOME/bin:$PATH' /etc/profile
 
 sudo sed -i '$a export DISPLAY=:0' /etc/profile
-sudo sed -i '$a export LANG=en_US.UTF-8' /etc/profile
-sudo sed -i '$a export LANGUAGE=en_US.UTF-8' /etc/profile
+sudo sed -i '$a export LANG=zh_CN.UTF-8' /etc/profile
+sudo sed -i '$a export LANGUAGE=zh_CN.UTF-8' /etc/profile
 
 # runit配置
 sudo apt install runit
