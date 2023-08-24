@@ -18,23 +18,27 @@
 		{
 			"label": "Elibot Run EliServer",
 			"type": "shell",
-			"command": "echo \"elibot\" | sudo -S ${config:elibot.cs.simPath}/EliServer/start_eliserver.sh",
+			"command": "echo ${config:local.password} | sudo -E bash  ${config:elibot.cs.simPath}/EliServer/start_eliserver.sh",
 			"detail": "启动eliserver服务"
 		},
 		{
 			"label": "Elibot Run EliServer For Background",
 			"type": "shell",
-			"command": "echo \"elibot\" | sudo -S ${config:elibot.cs.simPath}/EliServer/start_eliserver_for_task.sh",
+			"command": "sed \"s/EliServer &/EliServer/g\" ${config:elibot.cs.simPath}/EliServer/start_eliserver.sh > ${config:elibot.cs.simPath}/EliServer/start_eliserver_for_task.sh && ${config:elibot.cs.simPath}/EliServer/start_eliserver_for_task.sh",
 			"detail": "启动自定义的eliserver服务",
 			"isBackground": true,
+			"presentation": {
+				"clear": true,
+				"echo": true
+			},
 			"problemMatcher": {
 				"pattern": {
 					"regexp": "."
 				},
 				"background": {
-					"activeOnStart": true,
-					"beginsPattern": "eliserver_startup",
-					"endsPattern": "eliserver_startup"
+					// "activeOnStart": true,
+					"beginsPattern": "EliServer is starting...",
+					"endsPattern": "EliServer is started..."
 				}
 			}
 		},
@@ -52,18 +56,23 @@
 		{
 			"label": "Elibot Stop EliServer",
 			"type": "shell",
-			"command": "echo \"elibot\" | sudo -S ${config:elibot.cs.simPath}/EliServer/stop_eliserver_for_task.sh",
+			"command": "echo ${config:local.password} | sudo bash ${config:elibot.cs.simPath}/EliServer/stop_eliserver.sh",
 			"detail": "Stop ELiServer",
 			"presentation": {
 				"clear": true,
 				"echo": true
-			}
+			},
+			"problemMatcher": []
 		},
 		{
 			"label": "Elibot cp jar to local",
 			"type": "shell",
 			"command": "mvn package && cp target/*.jar ${config:elibot.cs.simPath}/EliRobot/.plugins",
 			"detail": "部署jar包到指定版本的仿真环境",
+			"presentation": {
+				"clear": true,
+				"echo": true
+			},
 			"problemMatcher": []
 		},
 		{
