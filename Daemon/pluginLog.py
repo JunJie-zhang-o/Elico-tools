@@ -1,4 +1,9 @@
 #! /usr/bin/env python3
+# coding=utf-8
+
+import sys
+
+PYTHON = sys.version_info[0]
 
 import functools
 import inspect
@@ -6,7 +11,7 @@ import logging
 import os
 import sys
 from logging.handlers import RotatingFileHandler
-from typing import Optional
+
 
 
 class Log:
@@ -57,7 +62,13 @@ class Log:
     }
     DEFAULT_LOG_PATH = r"/home/elite/EliRobot/program/"
 
-    def __init__(self, package_name: str, log_path: Optional[str] = None):
+    def __init__(self, package_name, log_path = None):
+        """_summary_
+
+        Args:
+            package_name (str): 类名或包名,在日志中进行显示
+            log_path (Optional[str], optional): 日志路径. Defaults to None.
+        """
 
         self.logger = logging.getLogger(package_name)
         self.logger.setLevel(logging.DEBUG)
@@ -96,7 +107,7 @@ class Log:
         self.logger.addHandler(fh)
         self.logger.addHandler(sh)
 
-    def __filter(self, record: logging.LogRecord):
+    def __filter(self, record):
         """实现一些自定义的日志格式
         #todo: 待实现颜色
         """
@@ -104,7 +115,7 @@ class Log:
         return True
 
     @property
-    def log_state(self) -> bool:
+    def log_state(self):
         """log 的状态
 
         Returns:
@@ -113,7 +124,7 @@ class Log:
         return not self.logger.disabled
 
     @log_state.setter
-    def log_state(self, state: bool) -> None:
+    def log_state(self, state):
         """修改 log 的状态
 
         Args:
@@ -122,7 +133,7 @@ class Log:
         self.logger.disabled = not state
 
     @property
-    def log_count(self) -> int:
+    def log_count(self):
         """返回日志 debug 记录的次数
 
         Returns:
@@ -130,7 +141,7 @@ class Log:
         """
         return self.__log_count
 
-    def __get_func_args(self, func: object, args: tuple) -> None:
+    def __get_func_args(self, func, args):
         """获取函数的参数信息
 
         Args:
@@ -138,7 +149,14 @@ class Log:
             args (tuple): 参数列表
         """
         # 获取函数参数返回一个有序字典
-        parms = inspect.signature(func).parameters
+        if PYTHON == 3:
+            parms = inspect.signature(func).parameters
+        else:
+            argspec = inspect.getargspec(func)
+            parms = {}
+            for arg in argspec.args:
+                parms.update({arg:arg})
+
         # 获取参数名，和参数类型
         # msg_args = "Args:"
         msg_args = "("
@@ -176,31 +194,49 @@ class Log:
             if temp != len(parms.items()): msg_args += ", "
 
         stack = inspect.stack()
-        line = stack[2].lineno
-        module_name = stack[2].filename.split("/")[-1]
+        if PYTHON == 3:
+            line = stack[2].lineno
+            module_name = stack[2].filename.split("/")[-1]
+            is_xmlrpc_request = True if module_name == "server.py" else False
+        else:
+            line = stack[2][2]
+            module_name = stack[2][1].split("/")[-1]
+            is_xmlrpc_request = True if module_name == "SimpleXMLRPCServer.py" else False
+            
+        return msg_args + ")", line, module_name, is_xmlrpc_request
 
-        return msg_args + ")", line, module_name
 
-    def logit(self, func):
+    def logit(self, just_for_xmlrpc = True):
         """装饰器实现
         """
+        def logit_with_args(func):
+            @functools.wraps(func)
+            def wrapper(*args, **kwargs):
+                name = func.__name__
+                # 获取函数参数返回一个有序字典
+                func_args, lineno, module_name, is_xmlrpc_request = self.__get_func_args(func, args)
 
-        @functools.wraps(func)
-        def wrapper(*args, **kwargs):
-            name = func.__name__
-            # 获取函数参数返回一个有序字典
-            func_args, lineno, module_name = self.__get_func_args(func, args)
-            # self.debug(f"Func Call: {module_name}:{lineno}| Func: {name}" +
-            #            func_args)
-            self.debug("Func Call: %s:%s | Func: %s"%(module_name,lineno,name)+func_args)
-            ret = func(*args, **kwargs)
-            self.debug("Func Call: %s:%s | Ret : %s"%(module_name,lineno,str(ret)))
-            return ret
+                # 调用前先记录
+                if just_for_xmlrpc & is_xmlrpc_request:
+                    self.debug("XMLRPC Call: %s:%s | Func: %s"%(module_name,lineno,name)+func_args)
+                if not just_for_xmlrpc:
+                    self.debug("Func Call: %s:%s | Func: %s"%(module_name,lineno,name)+func_args)
 
-        # self.info(wrapper)
-        return wrapper
+                ret = func(*args, **kwargs)
 
-    def debug(self, msg: str, inc_count: bool = True) -> None:
+                # 调用后记录
+                if just_for_xmlrpc & is_xmlrpc_request:
+                    self.debug("XMLRPC Call: %s:%s | Func: %s | Ret : %s"%(module_name,lineno,name,str(ret)))
+                if not just_for_xmlrpc:
+                    self.debug("Func Call: %s:%s | Func: %s | Ret : %s"%(module_name,lineno,name,str(ret)))
+
+                return ret
+
+            # self.info(wrapper)
+            return wrapper
+        return logit_with_args
+
+    def debug(self, msg, inc_count = True):
         """log debug ,该方法调用会使内部debug count 增加
 
         Args:
@@ -211,7 +247,7 @@ class Log:
             self.__log_count += 1
         self.logger.debug(msg)
 
-    def info(self, msg: str) -> None:
+    def info(self, msg):
         """log info ,该方法调用不会使内部debug count 增加
 
         Args:
@@ -219,7 +255,7 @@ class Log:
         """
         self.logger.info(msg)
 
-    def xmlRPC_start_info(self, host: str, port: int):
+    def xmlRPC_start_info(self, host, port):
         """打印并记录
 
         Args:
@@ -240,8 +276,7 @@ class Log:
         [self.info(i) for i in t]
 
 
-# logger = Log("ForceSensor","/tmp/eliPlugin.log")
-# logger = Log("ForceSensor")
+
 if __name__ == '__main__':
 
     logger = Log("AG95")
@@ -250,8 +285,8 @@ if __name__ == '__main__':
     logger.debug("info 级别的记录并不会使log_count增加")
     logger.info("此时 log_count 已经变为1")
 
-    @logger.logit
-    def connect_gripper(a, b, c: int = 9):
+    @logger.logit()
+    def connect_gripper(a, b, c = 9):
         print(a, b, c)
         print("----")
 
